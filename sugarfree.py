@@ -19,11 +19,6 @@ class Instruction(object):
     def decode(cls, instr):
         opcode = instr >> 11
         rd, rs = (instr >> 6) & 0x1F, instr & 0x3F
-
-        # special instructions
-        if opcode == 0xC:
-            opcode = instr >> 6
-
         decoded = cls.opcode_map[opcode]()
         decoded.rd, decoded.rs = rd, rs
         decoded.offset11 = instr & 0x7FF
@@ -211,7 +206,7 @@ class Wait(Exception):
     pass
 
 
-@register_opcode(0b0110000000)
+@register_opcode(0xC)
 class WAIT(Instruction):
     def execute(self, cpu):
         raise Wait
@@ -220,7 +215,7 @@ class WAIT(Instruction):
         return '%s' % self.__class__.__name__
 
 
-@register_opcode(0b0110010000)
+@register_opcode(0xD)
 class BAR(Instruction):
     def execute(self, cpu):
         cpu.barrier = cpu.rs_val
@@ -267,7 +262,7 @@ class SugarFreeCore(object):
         try:
             instr.execute(self)
             if self.trace_file:
-                self.trace_file.write("%6d %6d %3d %10d %10d\n" % (
+                self.trace_file.write("%d %d %d %d %d\n" % (
                     self.cycle_count, self.inst_count, self.pc, self.rs_val, self.rd_val))
             instr.update_pc(self)
         finally:
