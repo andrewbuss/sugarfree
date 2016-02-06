@@ -19,6 +19,9 @@ class Instruction(object):
     def decode(cls, instr):
         opcode = instr >> 11
         rd, rs = (instr >> 6) & 0x1F, instr & 0x3F
+
+        if opcode == 0xC:
+            opcode = instr >> 6
         decoded = cls.opcode_map[opcode]()
         decoded.rd, decoded.rs = rd, rs
         decoded.offset11 = instr & 0x7FF
@@ -206,7 +209,7 @@ class Wait(Exception):
     pass
 
 
-@register_opcode(0xC)
+@register_opcode(0b0110000000)
 class WAIT(Instruction):
     def execute(self, cpu):
         raise Wait
@@ -215,7 +218,7 @@ class WAIT(Instruction):
         return '%s' % self.__class__.__name__
 
 
-@register_opcode(0xD)
+@register_opcode(0b0110010000)
 class BAR(Instruction):
     def execute(self, cpu):
         cpu.barrier = cpu.rs_val
@@ -299,11 +302,11 @@ class SugarFreeCore(object):
         if addr == 0xDEADDEAD:
             raise DEADDEAD
         elif addr == 0xC0DEC0DE:
-            print >> stderr, 'CODE %08x' % val
+            print 'CODE %08x' % val
         elif addr == 0xC0FFEEEE:
-            print >> stderr, 'PASS %08x' % val
+            print 'PASS %08x' % val
         elif addr == 0x600DBEEF:
-            print >> stderr, 'DONE'
+            print 'DONE'
             raise GOODBEEF
         else:
             addr, shift = addr / 4, 24 - (3 - addr % 4) * 8
